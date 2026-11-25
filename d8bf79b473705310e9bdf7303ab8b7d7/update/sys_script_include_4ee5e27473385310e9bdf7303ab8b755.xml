@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_1850267_itom_r_0.OrphanedCIRemediationUtil</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <mobile_callable>false</mobile_callable>
+        <name>OrphanedCIRemediationUtil</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var OrphanedCIRemediationUtil = Class.create();
+OrphanedCIRemediationUtil.prototype = {
+
+    initialize: function() {
+        this.SCOPE = gs.getCurrentScopeName();
+        this.TASK_TABLE = this.SCOPE + '_ci_remediation_task';
+        this.STALE_DAYS = parseInt(gs.getProperty(this.SCOPE + '.stale_threshold_days', '30'), 10);
+        this.TARGET_CLASS = gs.getProperty(this.SCOPE + '.target_ci_class', 'cmdb_ci_server');
+        this.IRE_SOURCE = gs.getProperty(this.SCOPE + '.ire_source_name', 'ITOM_Remediation_Engine');
+    },
+
+    /**
+     * Generates an executive summary of stale CIs grouped by class using GlideAggregate.
+     * @returns {Object} Map of sys_class_name -> stale CI count
+     */
+    getStalenessSummaryByClass: function() {
+        var summary = {};
+        var cutoff = this._getCutoffDateTime();
+
+        var ga = new GlideAggregate(this.TARGET_CLASS);
+        ga.addQuery('operational_status', '!=', 6); // Exclude Retired (6)
+        ga.addNotNullQuery('last_discovered');
+        ga.addQuery('last_discovered', '<', cutoff);
+        ga.addAggregate('COUNT');
+        ga.groupBy('sys_class_name');
+        ga.query();
+
+        while (ga.next()) {
+            var className = ga.getValue('sys_class_name');
+            summary[className] = parseInt(ga.getAggregate('COUNT'), 10);
+        }
+
+        gs.info('[ITOM-Remediation] Stale CI Summary (>' + this.STALE_DAYS + ' days): ' + JSON.stringify(summary));
+        return summary;
+    },
+
+    /**
+     * Audits stale CIs and creates idempotent remediation tasks routed to CI Support Groups.
+     * @returns {Object} Execution metrics { scanned, created, skipped }
+     */
+    processStaleCIs: function() {
+        var metrics = { scanned: 0, created: 0, skipped: 0 };
+        var cutoff = this._getCutoffDateTime();
+        var nowGdt = new GlideDateTime();
+
+        var ciGr = new GlideRecord(this.TARGET_CLASS);
+        ciGr.addQuery('operational_status', '!=', 6); // Exclude Retired
+        ciGr.addNotNullQuery('last_discovered');
+        ciGr.addQuery('last_discovered', '<', cutoff);
+        ciGr.query();
+
+        while (ciGr.next()) {
+            metrics.scanned++;
+
+            if (this._hasOpenRemediationTask(ciGr.getUniqueValue())) {
+                metrics.skipped++;
+                continue;
+            }
+
+            var lastDiscGdt = new GlideDateTime(ciGr.getValue('last_discovered'));
+            var daysStale = Math.floor(GlideDateTime.subtract(lastDiscGdt, nowGdt).getNumericValue() / 86400000);
+
+            var taskGr = new GlideRecord(this.TASK_TABLE);
+            taskGr.initialize();
+            taskGr.setValue('cmdb_ci', ciGr.getUniqueValue());
+            taskGr.setValue('short_description', 'Orphaned CI Audit: ' + ciGr.getDisplayValue() + ' (' + daysStale + ' days stale)');
+            taskGr.setValue('description', 'CI has not been updated by Discovery since ' + ciGr.getDisplayValue('last_discovered') +
+                '. Verify active status, troubleshoot MID/credentials, or select "Retire CI via IRE" and close to auto-retire.');
+            taskGr.setValue('days_stale', daysStale);
+            taskGr.setValue('last_discovered_snapshot', ciGr.getValue('last_discovered'));
+
+            // Route to Support Group -> Managed By Group fallback
+            var group = ciGr.getValue('support_group') || ciGr.getValue('managed_by_group') || '';
+            if (group) taskGr.setValue('assignment_group', group);
+            if (ciGr.getValue('owned_by')) taskGr.setValue('assigned_to', ciGr.getValue('owned_by'));
+
+            if (taskGr.insert()) {
+                metrics.created++;
+            }
+        }
+
+        gs.info('[ITOM-Remediation] Run Complete: ' + JSON.stringify(metrics));
+        return metrics;
+    },
+
+    /**
+     * Retires a CI cleanly through IRE so Identification & Reconciliation rules are enforced.
+     * @param {String} ciSysId - sys_id of the target CI
+     * @returns {Object} Parsed IRE response
+     */
+    retireCIViaIRE: function(ciSysId) {
+        var ciGr = new GlideRecord('cmdb_ci');
+        if (!ciGr.get(ciSysId)) {
+            gs.error('[ITOM-Remediation] CI not found: ' + ciSysId);
+            return null;
+        }
+
+        var payload = {
+            items: [{
+                className: ciGr.getValue('sys_class_name'),
+                values: {
+                    name: ciGr.getValue('name'),
+                    serial_number: ciGr.getValue('serial_number') || '',
+                    operational_status: '6', // Retired
+                    install_status: '7'      // Retired
+                }
+            }]
+        };
+
+        // Remove empty serial_number so IRE falls back cleanly to name/other identifiers
+        if (!payload.items[0].values.serial_number) {
+            delete payload.items[0].values.serial_number;
+        }
+
+        var output = sn_cmdb.IdentificationEngine.createOrUpdateCI(
+            this.IRE_SOURCE,
+            JSON.stringify(payload)
+        );
+
+        gs.info('[ITOM-Remediation] IRE Retirement Response for ' + ciGr.getDisplayValue() + ': ' + output);
+        return JSON.parse(output);
+    },
+
+    _hasOpenRemediationTask: function(ciSysId) {
+        var checkGr = new GlideRecord(this.TASK_TABLE);
+        checkGr.addQuery('cmdb_ci', ciSysId);
+        checkGr.addActiveQuery();
+        checkGr.setLimit(1);
+        checkGr.query();
+        return checkGr.hasNext();
+    },
+
+    _getCutoffDateTime: function() {
+        // Always use GlideDateTime in Scoped Apps (gs.daysAgoStart is Global-only)
+        var gdt = new GlideDateTime();
+        gdt.addDaysUTC(-this.STALE_DAYS);
+        return gdt;
+    },
+
+    type: 'OrphanedCIRemediationUtil'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-11-24 12:11:46</sys_created_on>
+        <sys_id>4ee5e27473385310e9bdf7303ab8b755</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>OrphanedCIRemediationUtil</sys_name>
+        <sys_package display_value="ITOM Resilient Discovery Suite" source="x_1850267_itom_r_0">d8bf79b473705310e9bdf7303ab8b7d7</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="ITOM Resilient Discovery Suite">d8bf79b473705310e9bdf7303ab8b7d7</sys_scope>
+        <sys_update_name>sys_script_include_4ee5e27473385310e9bdf7303ab8b755</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-11-24 12:11:46</sys_updated_on>
+    </sys_script_include>
+</record_update>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update>
+    <sys_choice action="INSERT_OR_UPDATE" field="remediation_action" table="x_1850267_itom_r_0_ci_remediation_task" version="3">
+        <sys_choice_set action="INSERT_OR_UPDATE">
+            <element>remediation_action</element>
+            <name>x_1850267_itom_r_0_ci_remediation_task</name>
+            <sys_class_name>sys_choice_set</sys_class_name>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-11-24 12:07:06</sys_created_on>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_name>remediation_action</sys_name>
+            <sys_package display_value="ITOM Resilient Discovery Suite" source="x_1850267_itom_r_0">d8bf79b473705310e9bdf7303ab8b7d7</sys_package>
+            <sys_policy/>
+            <sys_scope display_value="ITOM Resilient Discovery Suite">d8bf79b473705310e9bdf7303ab8b7d7</sys_scope>
+            <sys_update_name>sys_choice_x_1850267_itom_r_0_ci_remediation_task_remediation_action</sys_update_name>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-11-24 12:07:06</sys_updated_on>
+        </sys_choice_set>
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>remediation_action</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>Verify Active</label>
+            <language>en</language>
+            <name>x_1850267_itom_r_0_ci_remediation_task</name>
+            <sequence>100</sequence>
+            <synonyms/>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-11-25 04:31:59</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-11-25 04:31:59</sys_updated_on>
+            <value>verify</value>
+        </sys_choice>
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>remediation_action</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>Retire CI via IRE</label>
+            <language>en</language>
+            <name>x_1850267_itom_r_0_ci_remediation_task</name>
+            <sequence>200</sequence>
+            <synonyms/>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-11-25 04:32:28</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-11-25 04:32:28</sys_updated_on>
+            <value>retire</value>
+        </sys_choice>
+        <sys_choice action="INSERT_OR_UPDATE">
+            <dependent_value/>
+            <element>remediation_action</element>
+            <hint/>
+            <inactive>false</inactive>
+            <label>Investigate Discovery Failure</label>
+            <language>en</language>
+            <name>x_1850267_itom_r_0_ci_remediation_task</name>
+            <sequence>300</sequence>
+            <synonyms/>
+            <sys_created_by>admin</sys_created_by>
+            <sys_created_on>2026-11-25 04:32:48</sys_created_on>
+            <sys_domain>global</sys_domain>
+            <sys_domain_path>/</sys_domain_path>
+            <sys_mod_count>0</sys_mod_count>
+            <sys_updated_by>admin</sys_updated_by>
+            <sys_updated_on>2026-11-25 04:32:48</sys_updated_on>
+            <value>investigate</value>
+        </sys_choice>
+    </sys_choice>
+</record_update>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?><database>
+    <element attributes="enforce_dot_walk_cross_scope_access=true" db_object_id="52932afc73f45310e9bdf7303ab8b76e" extends="task" label="CI Remediation Task" max_length="40" name="x_1850267_itom_r_0_ci_remediation_task" type="collection">
+        <element choice="1" label="Remediation Action" max_length="40" name="remediation_action" type="string">
+            <choice>
+                <element inactive_on_update="false" label="Verify Active" sequence="100" value="verify"/>
+                <element inactive_on_update="false" label="Retire CI via IRE" sequence="200" value="retire"/>
+                <element inactive_on_update="false" label="Investigate Discovery Failure" sequence="300" value="investigate"/>
+            </choice>
+        </element>
+        <element label="Days Stale" max_length="40" name="days_stale" type="integer"/>
+        <element label="Last Discovered Snapshot" max_length="40" name="last_discovered_snapshot" type="glide_date_time"/>
+    </element>
+</database>

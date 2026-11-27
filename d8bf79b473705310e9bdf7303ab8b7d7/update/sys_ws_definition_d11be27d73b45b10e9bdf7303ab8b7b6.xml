@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ws_definition">
+    <sys_ws_definition action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <base_uri>/api/x_1850267_itom_r_0/itom_alert_ingest</base_uri>
+        <consumes>application/json,application/xml,text/xml</consumes>
+        <consumes_customized>false</consumes_customized>
+        <default_version>No active default version</default_version>
+        <doc_link/>
+        <enforce_acl/>
+        <is_versioned>false</is_versioned>
+        <name>ITOM Alert Ingest</name>
+        <namespace>x_1850267_itom_r_0</namespace>
+        <produces>application/json,application/xml,text/xml</produces>
+        <produces_customized>false</produces_customized>
+        <service_id>itom_alert_ingest</service_id>
+        <short_description/>
+        <sys_class_name>sys_ws_definition</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-11-27 15:07:23</sys_created_on>
+        <sys_id>d11be27d73b45b10e9bdf7303ab8b7b6</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>ITOM Alert Ingest</sys_name>
+        <sys_package display_value="ITOM Resilient Discovery Suite" source="x_1850267_itom_r_0">d8bf79b473705310e9bdf7303ab8b7d7</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="ITOM Resilient Discovery Suite">d8bf79b473705310e9bdf7303ab8b7d7</sys_scope>
+        <sys_update_name>sys_ws_definition_d11be27d73b45b10e9bdf7303ab8b7b6</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-11-27 15:07:23</sys_updated_on>
+    </sys_ws_definition>
+</record_update>

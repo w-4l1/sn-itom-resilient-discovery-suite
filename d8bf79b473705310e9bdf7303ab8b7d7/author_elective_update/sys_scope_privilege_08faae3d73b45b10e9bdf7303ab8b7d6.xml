@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_scope_privilege">
+    <sys_scope_privilege action="DELETE">
+        <operation>read</operation>
+        <source_scope display_value="ITOM Resilient Discovery Suite">d8bf79b473705310e9bdf7303ab8b7d7</source_scope>
+        <status>allowed</status>
+        <sys_class_name>sys_scope_privilege</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-11-27 15:06:45</sys_created_on>
+        <sys_id>08faae3d73b45b10e9bdf7303ab8b7d6</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>sys_app</sys_name>
+        <sys_package display_value="ITOM Resilient Discovery Suite" source="x_1850267_itom_r_0">d8bf79b473705310e9bdf7303ab8b7d7</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="ITOM Resilient Discovery Suite">d8bf79b473705310e9bdf7303ab8b7d7</sys_scope>
+        <sys_update_name>sys_scope_privilege_08faae3d73b45b10e9bdf7303ab8b7d6</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-11-27 15:06:45</sys_updated_on>
+        <target_name>sys_app</target_name>
+        <target_scope display_value="Global">global</target_scope>
+        <target_type>sys_db_object</target_type>
+    </sys_scope_privilege>
+    <sys_update_version action="INSERT_OR_UPDATE">
+        <action>DELETE</action>
+        <application display_value="ITOM Resilient Discovery Suite">d8bf79b473705310e9bdf7303ab8b7d7</application>
+        <file_path/>
+        <instance_id>24ecf5b6fbbd43d81feef633beefdc87</instance_id>
+        <instance_name>dev421737</instance_name>
+        <name>sys_scope_privilege_08faae3d73b45b10e9bdf7303ab8b7d6</name>
+        <payload><![CDATA[<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_scope_privilege"><sys_scope_privilege action="INSERT_OR_UPDATE"><operation>read</operation><source_scope display_value="ITOM Resilient Discovery Suite">d8bf79b473705310e9bdf7303ab8b7d7</source_scope><status>allowed</status><sys_class_name>sys_scope_privilege</sys_class_name><sys_created_by>admin</sys_created_by><sys_created_on>2026-11-27 15:06:45</sys_created_on><sys_id>08faae3d73b45b10e9bdf7303ab8b7d6</sys_id><sys_mod_count>0</sys_mod_count><sys_name>sys_app</sys_name><sys_package display_value="ITOM Resilient Discovery Suite" source="x_1850267_itom_r_0">d8bf79b473705310e9bdf7303ab8b7d7</sys_package><sys_policy/><sys_scope display_value="ITOM Resilient Discovery Suite">d8bf79b473705310e9bdf7303ab8b7d7</sys_scope><sys_update_name>sys_scope_privilege_08faae3d73b45b10e9bdf7303ab8b7d6</sys_update_name><sys_updated_by>admin</sys_updated_by><sys_updated_on>2026-11-27 15:06:45</sys_updated_on><target_name>sys_app</target_name><target_scope display_value="Global">global</target_scope><target_type>sys_db_object</target_type></sys_scope_privilege></record_update>]]></payload>
+        <payload_hash>-1708299989</payload_hash>
+        <record_name>sys_app</record_name>
+        <reverted_from/>
+        <source>16e0aa3473f45310e9bdf7303ab8b78c</source>
+        <source_table>sys_update_set</source_table>
+        <state>previous</state>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-11-27 15:06:45</sys_created_on>
+        <sys_id>c4faae3d73b45b10e9bdf7303ab8b7db</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_recorded_at>1a21d8b68810000001</sys_recorded_at>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-11-27 15:06:45</sys_updated_on>
+        <type>Cross scope privilege</type>
+        <update_guid>40faae3d17b45b10367cfd67847581da</update_guid>
+        <update_guid_history>40faae3d17b45b10367cfd67847581da:-1708299989</update_guid_history>
+    </sys_update_version>
+    <sys_metadata_delete action="INSERT_OR_UPDATE">
+        <sys_audit_delete/>
+        <sys_class_name>sys_metadata_delete</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-11-27 15:44:29</sys_created_on>
+        <sys_db_object display_value="" name="sys_scope_privilege">sys_scope_privilege</sys_db_object>
+        <sys_id>0ce4c5ddca914b4080fedb14ba760824</sys_id>
+        <sys_metadata>08faae3d73b45b10e9bdf7303ab8b7d6</sys_metadata>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>sys_app</sys_name>
+        <sys_package display_value="ITOM Resilient Discovery Suite" source="x_1850267_itom_r_0">d8bf79b473705310e9bdf7303ab8b7d7</sys_package>
+        <sys_parent/>
+        <sys_policy/>
+        <sys_scope display_value="ITOM Resilient Discovery Suite">d8bf79b473705310e9bdf7303ab8b7d7</sys_scope>
+        <sys_scope_delete display_value="">1e97b6733be746389fca3a8477862c40</sys_scope_delete>
+        <sys_update_name>sys_scope_privilege_08faae3d73b45b10e9bdf7303ab8b7d6</sys_update_name>
+        <sys_update_version display_value="sys_scope_privilege_08faae3d73b45b10e9bdf7303ab8b7d6">c4faae3d73b45b10e9bdf7303ab8b7db</sys_update_version>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-11-27 15:44:29</sys_updated_on>
+    </sys_metadata_delete>
+</record_update>

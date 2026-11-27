@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>public</access>
+        <active>true</active>
+        <api_name>x_1850267_itom_r_0.ITOMAlertCorrelationUtil</api_name>
+        <caller_access/>
+        <client_callable>false</client_callable>
+        <description/>
+        <mobile_callable>false</mobile_callable>
+        <name>ITOMAlertCorrelationUtil</name>
+        <sandbox_callable>false</sandbox_callable>
+        <script><![CDATA[var ITOMAlertCorrelationUtil = Class.create();
+ITOMAlertCorrelationUtil.prototype = {
+
+    initialize: function() {
+        this.SCOPE = gs.getCurrentScopeName();
+        this.ALERT_TABLE = this.SCOPE + '_itom_alert_event';
+        this.CI_FIELD = 'configuration_item';
+        this.MAX_INC_SEV = parseInt(gs.getProperty(this.SCOPE + '.alert_auto_incident_max_severity', '2'), 10);
+        this.FALLBACK_GROUP = gs.getProperty(this.SCOPE + '.alert_default_assignment_group', 'Service Desk');
+    },
+
+    ingestEvent: function(payload) {
+        if (!payload || !payload.node || !payload.message_key || !payload.severity || !payload.description) {
+            return {
+                http_status: 400,
+                action: 'ERROR',
+                message: 'Missing required fields: node, message_key, severity, and description are mandatory.'
+            };
+        }
+
+        var severityNum = parseInt(payload.severity, 10);
+        if (isNaN(severityNum) || severityNum < 1 || severityNum > 4) {
+            return {
+                http_status: 400,
+                action: 'ERROR',
+                message: 'Invalid severity. Must be an integer between 1 (Critical) and 4 (Info).'
+            };
+        }
+
+        var rawJson = JSON.stringify(payload);
+        var existingAlert = this._findOpenAlertByKey(payload.message_key);
+
+        if (existingAlert) {
+            var nextCount = parseInt(existingAlert.getValue('event_count') || '1', 10) + 1;
+            existingAlert.setValue('event_count', nextCount);
+            existingAlert.setValue('raw_payload', rawJson);
+            existingAlert.update();
+
+            gs.info('[ITOM-AlertIngest] Deduplicated alert ' + existingAlert.getValue('number') +
+                ' (key=' + payload.message_key + ', count=' + nextCount + ')');
+
+            return {
+                http_status: 200,
+                action: 'DEDUPLICATED',
+                alert_number: existingAlert.getValue('number'),
+                event_count: nextCount,
+                ci_bound: existingAlert.getDisplayValue(this.CI_FIELD) || 'Unbound',
+                incident_number: existingAlert.getDisplayValue('incident') || 'None'
+            };
+        }
+
+        var ciGr = this._resolveServerCI(payload.node);
+        var alertGr = new GlideRecord(this.ALERT_TABLE);
+        alertGr.initialize();
+        alertGr.setValue('message_key', String(payload.message_key));
+        alertGr.setValue('source', String(payload.source || 'ExternalMonitor'));
+        alertGr.setValue('node', String(payload.node));
+        alertGr.setValue('metric_name', String(payload.metric_name || 'General'));
+        alertGr.setValue('severity', severityNum);
+        alertGr.setValue('state', 'open');
+        alertGr.setValue('event_count', 1);
+        alertGr.setValue('description', String(payload.description));
+        alertGr.setValue('raw_payload', rawJson);
+
+        if (ciGr) {
+            alertGr.setValue(this.CI_FIELD, ciGr.getUniqueValue());
+        }
+
+        var alertSysId = alertGr.insert();
+        if (!alertSysId) {
+            gs.error('[ITOM-AlertIngest] Failed to insert alert record for key: ' + payload.message_key);
+            return {
+                http_status: 500,
+                action: 'ERROR',
+                message: 'Failed to persist alert record.'
+            };
+        }
+
+        var incidentNumber = 'None';
+        if (severityNum <= this.MAX_INC_SEV) {
+            var incResult = this._createCorrelatedIncident(alertGr, ciGr, severityNum);
+            if (incResult) {
+                alertGr.setValue('incident', incResult.sys_id);
+                alertGr.setValue('state', 'processed');
+                alertGr.update();
+                incidentNumber = incResult.number;
+            }
+        }
+
+        gs.info('[ITOM-AlertIngest] Created alert ' + alertGr.getValue('number') +
+            ' | CI=' + (ciGr ? ciGr.getDisplayValue() : 'Unbound') +
+            ' | Incident=' + incidentNumber);
+
+        return {
+            http_status: 201,
+            action: 'CREATED',
+            alert_number: alertGr.getValue('number'),
+            event_count: 1,
+            ci_bound: ciGr ? ciGr.getDisplayValue() : 'Unbound',
+            incident_number: incidentNumber
+        };
+    },
+
+    _findOpenAlertByKey: function(messageKey) {
+        var gr = new GlideRecord(this.ALERT_TABLE);
+        gr.addQuery('message_key', messageKey);
+        gr.addQuery('state', '!=', 'closed');
+        gr.setLimit(1);
+        gr.query();
+        return gr.next() ? gr : null;
+    },
+
+    _resolveServerCI: function(nodeIdentifier) {
+        var ciGr = new GlideRecord('cmdb_ci_server');
+        var qc = ciGr.addQuery('name', nodeIdentifier);
+        qc.addOrCondition('ip_address', nodeIdentifier);
+        ciGr.addQuery('operational_status', '!=', 6);
+        ciGr.setLimit(1);
+        ciGr.query();
+        return ciGr.next() ? ciGr : null;
+    },
+
+    _createCorrelatedIncident: function(alertGr, ciGr, severityNum) {
+        var incGr = new GlideRecord('incident');
+        incGr.initialize();
+        incGr.setValue('short_description', '[ITOM Alert] ' + alertGr.getValue('node') + ' - ' + alertGr.getValue('metric_name') + ': ' + alertGr.getValue('description'));
+        incGr.setValue('description', 'Auto-generated from ' + alertGr.getValue('source') + ' alert ' + alertGr.getValue('number') + '.\n\nMessage Key: ' + alertGr.getValue('message_key') + '\nDetails: ' + alertGr.getValue('description'));
+        incGr.setValue('impact', severityNum === 1 ? '1' : '2');
+        incGr.setValue('urgency', severityNum === 1 ? '1' : '2');
+
+        if (ciGr) {
+            incGr.setValue('cmdb_ci', ciGr.getUniqueValue());
+        }
+
+        var groupSysId = (ciGr && ciGr.getValue('support_group')) ? ciGr.getValue('support_group') : this._resolveGroupByName(this.FALLBACK_GROUP);
+        if (groupSysId) {
+            incGr.setValue('assignment_group', groupSysId);
+        }
+
+        var incSysId = incGr.insert();
+        if (!incSysId) {
+            gs.error('[ITOM-AlertIngest] Incident creation failed for alert ' + alertGr.getValue('number'));
+            return null;
+        }
+        return { sys_id: incSysId, number: incGr.getValue('number') };
+    },
+
+    _resolveGroupByName: function(groupName) {
+        if (!groupName) return '';
+        var grpGr = new GlideRecord('sys_user_group');
+        grpGr.addQuery('name', groupName);
+        grpGr.addQuery('active', true);
+        grpGr.setLimit(1);
+        grpGr.query();
+        return grpGr.next() ? grpGr.getUniqueValue() : '';
+    },
+
+    type: 'ITOMAlertCorrelationUtil'
+};]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-11-27 15:07:22</sys_created_on>
+        <sys_id>8d1be27d73b45b10e9bdf7303ab8b7af</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>ITOMAlertCorrelationUtil</sys_name>
+        <sys_package display_value="ITOM Resilient Discovery Suite" source="x_1850267_itom_r_0">d8bf79b473705310e9bdf7303ab8b7d7</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="ITOM Resilient Discovery Suite">d8bf79b473705310e9bdf7303ab8b7d7</sys_scope>
+        <sys_update_name>sys_script_include_8d1be27d73b45b10e9bdf7303ab8b7af</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-11-27 15:07:22</sys_updated_on>
+    </sys_script_include>
+</record_update>
